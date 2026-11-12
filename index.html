@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>XIII — календарь</title>
+<meta name="description" content="XIII — личный календарь: месяц, события, экспорт в .ics. Данные хранятся только у вас в браузере.">
+<meta property="og:title" content="XIII — календарь">
+<meta property="og:description" content="Месяц, события, экспорт в .ics. Данные только в вашем браузере.">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a0f'/%3E%3Ctext x='32' y='42' font-size='26' text-anchor='middle' fill='%23a78bfa' font-family='serif' font-weight='700'%3EXIII%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#0a0a0f;--ink:#e8e6f0;--mute:#8a85a8;--acc:#a78bfa;--acc2:#c4b5fd;--panel:rgba(20,18,30,.8);--line:rgba(167,139,250,.22);--today:#fbbf24}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{min-height:100dvh;background:radial-gradient(900px 500px at 50% -120px,rgba(109,79,199,.28),transparent 70%),var(--bg)}
+.app{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.brand h1{font:700 34px/1 ui-serif,Georgia,"Times New Roman",serif;letter-spacing:.14em;color:var(--acc2);text-shadow:0 0 22px rgba(167,139,250,.5)}
+.brand small{color:var(--mute);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+.bar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.title{flex:1;text-align:center}
+.title b{display:block;font:600 22px/1.1 ui-serif,Georgia,serif;text-transform:capitalize}
+.title span{color:var(--mute);font-size:12px;letter-spacing:.12em}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 14px;cursor:pointer;min-height:44px;transition:.15s}
+button:hover,button:focus-visible{border-color:var(--acc);box-shadow:0 0 16px rgba(167,139,250,.25);outline:none}
+button:active{transform:scale(.97)}
+.nav{width:46px;padding:0;font-size:22px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;touch-action:pan-y}
+.wd{color:var(--mute);font-size:12px;text-align:center;padding:6px 0;letter-spacing:.08em}
+.wd:nth-child(n+6){color:#b99aff}
+.d{position:relative;aspect-ratio:1/1.12;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:7px 2px 4px;font-size:16px;cursor:pointer;min-height:0}
+.d.o{opacity:.34}
+.d.we{color:#c9b6ff}
+.d.t{border-color:var(--today);box-shadow:inset 0 0 0 1px var(--today)}
+.d.s{background:linear-gradient(160deg,rgba(124,92,230,.55),rgba(60,40,120,.5));border-color:var(--acc2)}
+.dots{display:flex;gap:3px;margin-top:auto;margin-bottom:3px;min-height:6px}
+.dots i{width:6px;height:6px;border-radius:50%;display:block}
+.more{font-size:10px;color:var(--mute);line-height:6px}
+.panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.panel h2{font:600 18px/1.2 ui-serif,Georgia,serif;margin-bottom:10px}.panel h2::first-letter{text-transform:uppercase}
+.ev{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.ev:first-of-type{border-top:0}
+.ev .c{width:10px;align-self:stretch;border-radius:5px;flex:none;min-height:30px}
+.ev .tm{color:var(--mute);font-variant-numeric:tabular-nums;min-width:48px;font-size:14px}
+.ev .tx{flex:1;word-break:break-word}
+.ev .x{min-height:36px;padding:4px 10px;color:#ff8da1}
+.empty{color:var(--mute);padding:6px 0 12px}
+form{display:grid;gap:10px;margin-top:12px}
+.row{display:flex;gap:8px}
+input[type=text],input[type=time]{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.4);color:var(--ink);padding:10px 12px;font:inherit}
+input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 14px rgba(167,139,250,.3)}
+input[type=time]{width:130px;flex:none}
+.sw{display:flex;gap:10px;align-items:center}
+.sw label{position:relative;width:34px;height:34px;display:block}
+.sw input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.sw span{display:block;width:100%;height:100%;border-radius:50%;border:2px solid transparent}
+.sw input:checked+span{border-color:#fff;box-shadow:0 0 12px currentColor}
+.add{background:linear-gradient(135deg,#7c5ce6,#a78bfa);border:0;color:#10091f;font-weight:700}
+.foot{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.foot button{flex:1;font-size:14px;color:var(--acc2)}
+.note{margin-top:18px;color:var(--mute);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="brand"><h1>XIII</h1><small>календарь</small></header>
+  <div class="bar">
+    <button class="nav" id="prev" aria-label="Предыдущий месяц">‹</button>
+    <div class="title"><b id="mname"></b><span id="myear"></span></div>
+    <button class="nav" id="next" aria-label="Следующий месяц">›</button>
+  </div>
+  <div class="grid" id="grid" role="grid" aria-label="Календарь"></div>
+  <section class="panel" aria-live="polite">
+    <h2 id="dtitle"></h2>
+    <div id="evs"></div>
+    <form id="form" autocomplete="off">
+      <div class="row"><input type="text" id="ttl" maxlength="80" placeholder="Новое событие" required aria-label="Название"><input type="time" id="tm" aria-label="Время"></div>
+      <div class="sw" id="sw"></div>
+      <button class="add" type="submit">Добавить событие</button>
+    </form>
+  </section>
+  <div class="foot">
+    <button id="today">Сегодня</button>
+    <button id="ics">Экспорт .ics</button>
+  </div>
+  <p class="note">События хранятся только в этом браузере и никуда не отправляются.</p>
+</main>
+<script>
+(function(){
+  'use strict';
+  var KEY='xiii.events.v1';
+  var MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+  var MONTHS_GEN=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var DAYS=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  var ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  var COLORS=['#a78bfa','#34d399','#fbbf24','#fb7185','#38bdf8'];
+  var $=function(id){return document.getElementById(id)};
+  var store; try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}
+  if(!store||typeof store!=='object'||Array.isArray(store))store={};
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+  function pad(n){return n<10?'0'+n:''+n}
+  function ymd(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d)}
+  var now=new Date(),ty=now.getFullYear(),tm=now.getMonth(),td=now.getDate();
+  var vy=ty,vm=tm,sel=ymd(ty,tm,td),color=COLORS[0];
+
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+
+  function render(){
+    $('mname').textContent=MONTHS[vm];
+    $('myear').textContent=ROMAN[vm]+' · '+vy;
+    var g=$('grid');g.textContent='';
+    ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function(w){g.appendChild(el('div','wd',w))});
+    var first=new Date(vy,vm,1).getDay(); first=(first+6)%7;          // Monday=0
+    var start=new Date(vy,vm,1-first);
+    for(var i=0;i<42;i++){
+      var dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+      var y=dt.getFullYear(),m=dt.getMonth(),d=dt.getDate(),k=ymd(y,m,d);
+      var c=el('button','d'+(m!==vm?' o':'')+((i%7)>4?' we':'')+(k===ymd(ty,tm,td)?' t':'')+(k===sel?' s':''));
+      c.type='button';c.setAttribute('role','gridcell');c.setAttribute('aria-label',d+' '+MONTHS_GEN[m]+' '+y);
+      c.appendChild(el('span',null,d));
+      var list=store[k]||[],dots=el('div','dots');
+      list.slice(0,3).forEach(function(e){var b=el('i');b.style.background=e.c;dots.appendChild(b)});
+      if(list.length>3)dots.appendChild(el('span','more','+'+(list.length-3)));
+      c.appendChild(dots);
+      (function(k,y,m){c.addEventListener('click',function(){sel=k;if(m!==vm){vy=y;vm=m}render()})})(k,y,m);
+      g.appendChild(c);
+    }
+    renderDay();
+  }
+  function parse(k){var p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+  function renderDay(){
+    var d=parse(sel);
+    $('dtitle').textContent=DAYS[d.getDay()]+', '+d.getDate()+' '+MONTHS_GEN[d.getMonth()];
+    var box=$('evs');box.textContent='';
+    var list=(store[sel]||[]).slice().sort(function(a,b){return (a.t||'99').localeCompare(b.t||'99')});
+    if(!list.length)box.appendChild(el('div','empty','На этот день событий нет.'));
+    list.forEach(function(e){
+      var r=el('div','ev'),cc=el('div','c');cc.style.background=e.c;r.appendChild(cc);
+      r.appendChild(el('div','tm',e.t||'весь день'));r.appendChild(el('div','tx',e.n));
+      var x=el('button','x','✕');x.type='button';x.setAttribute('aria-label','Удалить');
+      x.addEventListener('click',function(){store[sel]=(store[sel]||[]).filter(function(z){return z.i!==e.i});if(!store[sel].length)delete store[sel];save();render()});
+      r.appendChild(x);box.appendChild(r);
+    });
+  }
+  // colour swatches
+  COLORS.forEach(function(c,i){
+    var l=el('label'),inp=document.createElement('input');inp.type='radio';inp.name='col';inp.value=c;inp.checked=i===0;
+    inp.setAttribute('aria-label','Цвет '+(i+1));
+    inp.addEventListener('change',function(){color=c});
+    var s=el('span');s.style.background=c;s.style.color=c;l.appendChild(inp);l.appendChild(s);$('sw').appendChild(l);
+  });
+  $('form').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var n=$('ttl').value.trim();if(!n)return;
+    (store[sel]=store[sel]||[]).push({i:Date.now().toString(36)+Math.random().toString(36).slice(2,6),n:n,t:$('tm').value||'',c:color});
+    save();$('ttl').value='';$('tm').value='';render();
+  });
+  function go(delta){vm+=delta;while(vm<0){vm+=12;vy--}while(vm>11){vm-=12;vy++}render()}
+  $('prev').addEventListener('click',function(){go(-1)});
+  $('next').addEventListener('click',function(){go(1)});
+  $('today').addEventListener('click',function(){vy=ty;vm=tm;sel=ymd(ty,tm,td);render()});
+  // swipe
+  var sx=null;
+  $('grid').addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});
+  $('grid').addEventListener('touchend',function(e){if(sx==null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>60)go(dx<0?1:-1)},{passive:true});
+  // keyboard
+  document.addEventListener('keydown',function(e){if(/INPUT|TEXTAREA/.test((e.target||{}).tagName))return;if(e.key==='ArrowLeft')go(-1);if(e.key==='ArrowRight')go(1)});
+  // .ics export
+  function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n')}
+  $('ics').addEventListener('click',function(){
+    var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//XIII//calendar//RU','CALSCALE:GREGORIAN'];
+    Object.keys(store).sort().forEach(function(k){store[k].forEach(function(e){
+      var d=k.replace(/-/g,'');L.push('BEGIN:VEVENT','UID:'+e.i+'@xiii.is-a.dev','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''));
+      if(e.t){var t=e.t.replace(':','')+'00';L.push('DTSTART:'+d+'T'+t)}else L.push('DTSTART;VALUE=DATE:'+d);
+      L.push('SUMMARY:'+esc(e.n),'END:VEVENT');
+    })});
+    L.push('END:VCALENDAR');
+    var blob=new Blob([L.join('\r\n')],{type:'text/calendar'}),a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='xiii-calendar.ics';document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  });
+  render();
+})();
+</script>
+</body>
+</html>
